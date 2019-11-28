@@ -12,6 +12,7 @@ import com.spotify.android.appremote.api.Connector
 import com.spotify.android.appremote.api.SpotifyAppRemote
 import kotlinx.android.synthetic.main.activity_main.*
 import java.lang.Thread.sleep
+import kotlin.system.measureNanoTime
 
 
 enum class PlayingState {
@@ -38,7 +39,6 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-
         /*
         When the button is clicked, change from disconnected to connected on screen and play
          default playlist.

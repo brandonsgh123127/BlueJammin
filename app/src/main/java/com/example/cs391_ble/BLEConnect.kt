@@ -50,8 +50,13 @@ var rssi1:Int = 0
 var rssi2:Int = 0
 var rssi3:Int = 0
 
-private const val SYS_DELAY = 0.001 // Reading each Device's rssi creates lag...  Subtract from signal received
-private const val SIGNAL_S = 0.3    //Speed(m) of signal per ns....
+private const val SYS_DELAY = 0.002 // Reading each Device's rssi creates lag...  about 2 ns lag
+private const val SIGNAL_S = .299792    //Speed(m) of signal per ns....
+
+var time1Lst:MutableList<Long> = mutableListOf()
+var time2Lst:MutableList<Long> = mutableListOf()
+var time3Lst:MutableList<Long> = mutableListOf()
+
 
 /**
  * As of now, everything will be implemented inside the onCreate function, as there is
@@ -164,15 +169,18 @@ class BLEConnect: AppCompatActivity()  {
                 Log.d("isConnect","${isConnected}, ${isConnected2}, ${isConnected3}.")
                 //Setting rssi ..... First implementation...
                 if(result?.device?.address == "80:6F:B0:6C:94:2B")
-                    Log.d("time1!!!","${measureNanoTime {rssi1 = result.getRssi()}}")
-                if(result?.device?.address == "E0:7D:EA:2D:29:AB")
-                    Log.d("time2!!!","${measureNanoTime {rssi2 = result.getRssi()}}")
-                if(result?.device?.address == "80:6F:B0:6C:8F:B6")
-                    Log.d("time3!!!","${measureNanoTime {rssi3 = result.getRssi()}}")
+                    time1Lst.add(measureNanoTime{rssi1 = result.getRssi()})
+                    //Log.d("time1!!!","${measureNanoTime {rssi1 = result.getRssi()}}")
+                else if(result?.device?.address == "E0:7D:EA:2D:29:AB")
+                    time2Lst.add(measureNanoTime{rssi2 = result.getRssi()})
+                    //Log.d("time2!!!","${measureNanoTime {rssi2 = result.getRssi()}}")
+                else if(result?.device?.address == "80:6F:B0:6C:8F:B6")
+                    time3Lst.add(measureNanoTime{rssi3 = result.getRssi()})
+                    //Log.d("time3!!!","${measureNanoTime {rssi3 = result.getRssi()}}")
                 Beacon1RSSI.text=Integer.toString(rssi1) + " dBm"
                 Beacon2RSSI.text=Integer.toString(rssi2) + " dBm"
                 Beacon3RSSI.text=Integer.toString(rssi3) + " dBm"
-                //angleCalc(bluetoothGatt)
+                angleCalc(bluetoothGatt)
             }
         }
         /**
@@ -198,10 +206,9 @@ class BLEConnect: AppCompatActivity()  {
      * USES TDOA TO CALCULATE LOCATION
      */
     fun angleCalc(gatt:BluetoothGatt?){
-        var characteristics: List<BluetoothGattService>? = gatt?.services
-        for(service in characteristics!!){
-            Log.d("servicesss","${service.instanceId}")
-        }
+        Log.d("list1 time", time1Lst.average().toString())
+        Log.d("list2 time", time2Lst.average().toString())
+        Log.d("list3 time", time3Lst.average().toString())
     }
 
 

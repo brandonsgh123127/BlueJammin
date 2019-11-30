@@ -49,13 +49,14 @@ class MainActivity : AppCompatActivity() {
                 /*
                 Testing purposes...  remove later on...
                  */
-                SpotifyService.play("spotify:playlist:71JXQ7EwfZMKmLPrzKZAB4")
+                //SpotifyService.play("spotify:playlist:71JXQ7EwfZMKmLPrzKZAB4")
                 // Toast message to confirm connection...
                 Toast.makeText(this,"CONNECTED!",Toast.LENGTH_LONG).show()
 
             }
             sleep(1000)
             val intent = Intent(this, BLEConnect::class.java)
+            intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
             startActivity(intent)
         }
     }
@@ -76,6 +77,7 @@ class PlayerActivity : AppCompatActivity() {
  * Connects to Spotify API by Intent to ask for permission inside spotify app.
  */
 object SpotifyService {
+    private var currentPlaylist = ""
     private var spotifyAppRemote: SpotifyAppRemote? = null
     private var connectionParams: ConnectionParams = ConnectionParams.Builder(CLIENT_ID)
         .setRedirectUri(REDIRECT_URI)
@@ -108,6 +110,7 @@ object SpotifyService {
      */
     fun play(uri: String) {
         spotifyAppRemote?.playerApi?.play(uri)
+        currentPlaylist = uri
     }
 
     fun resume() {
@@ -131,6 +134,9 @@ object SpotifyService {
                 handler(PlayingState.PLAYING)
             }
         }
+    }
+    fun getPlayllist(): String {
+        return currentPlaylist
     }
 }
 

@@ -21,11 +21,15 @@ import androidx.core.app.ComponentActivity
 import androidx.core.app.ComponentActivity.ExtraData
 import androidx.core.content.ContextCompat.getSystemService
 import android.icu.lang.UCharacter.GraphemeClusterBreak.T
+import android.icu.text.SimpleDateFormat
 import android.text.format.Time
 import android.view.View
 import androidx.core.content.PermissionChecker
+import com.spotify.android.appremote.api.SpotifyAppRemote
+import com.spotify.protocol.error.SpotifyAppRemoteException
 import java.lang.Thread.sleep
-import java.util.Date
+import java.util.*
+import kotlin.concurrent.fixedRateTimer
 import kotlin.system.measureNanoTime
 
 
@@ -50,13 +54,14 @@ var rssi1:Int = 0
 var rssi2:Int = 0
 var rssi3:Int = 0
 
-private const val SYS_DELAY = 0.002 // Reading each Device's rssi creates lag...  about 2 ns lag
+private const val SYS_DELAY = 0.11111 // Reading each Device's rssi creates lag...  about 8 ns lag
 private const val SIGNAL_S = .299792    //Speed(m) of signal per ns....
 
 var time1Lst:MutableList<Long> = mutableListOf()
 var time2Lst:MutableList<Long> = mutableListOf()
 var time3Lst:MutableList<Long> = mutableListOf()
 
+var curPlaylist = ""
 
 /**
  * As of now, everything will be implemented inside the onCreate function, as there is
@@ -64,6 +69,7 @@ var time3Lst:MutableList<Long> = mutableListOf()
  */
 class BLEConnect: AppCompatActivity()  {
     override fun onCreate(savedInstanceState: Bundle?) {
+        //finish()
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         SpotifyAPIBUTTON.visibility = View.INVISIBLE
@@ -75,15 +81,20 @@ class BLEConnect: AppCompatActivity()  {
             if(isChecked==false){
                 on_Switch.text= getResources().getString(R.string.Beacon_RSSI)
             }
-            else
+            else if(isChecked==true)
             {
                 on_Switch.text= getResources().getString(R.string.Beacon_TDOA)
+                val intent = Intent(this, TDOAConnect::class.java)
+                startActivity(intent)
             }
         }
-        initBLE()
+        initBLERSSI()
     }
-    private fun initBLE(){
 
+
+
+    // RSSI Calculated-method
+    private fun initBLERSSI(){
         isConnectedText.setText("Connected!")
         Toast.makeText(this, "Done", Toast.LENGTH_LONG).show()
         // Represents bluetooth device on phone.
@@ -97,8 +108,6 @@ class BLEConnect: AppCompatActivity()  {
             val enableBtIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
             startActivityForResult(enableBtIntent, 1)
         }
-
-
         /**
          * Now, Let's connect to a GATT server, aka the BLE devices...
          * Here is where the fun begins...
@@ -200,6 +209,31 @@ class BLEConnect: AppCompatActivity()  {
         gattCallback.onReadRemoteRssi(bluetoothGatt,rssi1,0)
         gattCallback.onReadRemoteRssi(bluetoothGatt2,rssi2,0)
         gattCallback.onReadRemoteRssi(bluetoothGatt3,rssi3,0)
+
+        fixedRateTimer("timer", false, 0L, 10 * 1000) { //EVERY 5 SECONDS!
+            this@BLEConnect.runOnUiThread {
+                val avg1 = time1Lst.average() * SYS_DELAY * SIGNAL_S
+                val avg2 = time2Lst.average() * SYS_DELAY * SIGNAL_S
+                val avg3 = time3Lst.average() * SYS_DELAY * SIGNAL_S
+
+                // THIS IS THE PART WHERE PLAYLIST WILL CHANGGE
+                if(avg1 > avg2 && avg2 > avg3) // 2nd sector
+                    if(SpotifyService.getPlayllist() != "spotify:playlist:71JXQ7EwfZMKmLPrzKZAB4" )
+                        SpotifyService.play("spotify:playlist:71JXQ7EwfZMKmLPrzKZAB4")
+                else if(avg2>avg1 && avg1> avg3)//sector 3
+                    if(SpotifyService.getPlayllist() != "spotify:playlist:37i9dQZF1DX1PfYnYcpw8w" )
+                        SpotifyService.play("spotify:playlist:37i9dQZF1DX1PfYnYcpw8w")
+                else if(avg2>avg1 && avg3 > avg1)// sector 4
+                    if(SpotifyService.getPlayllist() != "spotify:playlist:37i9dQZF1DXbYM3nMM0oPk" )
+                        SpotifyService.play("spotify:playlist:37i9dQZF1DXbYM3nMM0oPk")
+                else if(avg3>avg2 && avg1 > avg2) //1st sector
+                    if(SpotifyService.getPlayllist() != "spotify:playlist:37i9dQZF1DWTlgzqHpWg4m" )
+                        SpotifyService.play("spotify:playlist:37i9dQZF1DWTlgzqHpWg4m")
+                time1Lst = mutableListOf()
+                time2Lst = mutableListOf()
+                time3Lst = mutableListOf()
+            }
+        }
     }
 
     /**
@@ -219,6 +253,13 @@ class BLEConnect: AppCompatActivity()  {
     }
 
 
+}
+class TDOAConnect:AppCompatActivity(){
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+    }
 }
 
 

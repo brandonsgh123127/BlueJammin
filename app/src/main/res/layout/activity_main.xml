@@ -180,6 +180,7 @@
         android:layout_marginTop="5dp"
         android:layout_marginEnd="248dp"
         android:layout_marginBottom="103dp"
+        android:checked="false"
         android:text="@string/Beacon_RSSI"
         android:textOff="@string/off"
         android:textOn="@string/on"
@@ -188,6 +189,7 @@
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="1.0" />
+        app:layout_constraintVertical_bias="1.0"
+        tools:checked="false" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

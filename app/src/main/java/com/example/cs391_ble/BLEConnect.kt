@@ -27,6 +27,8 @@ import android.view.View
 import androidx.core.content.PermissionChecker
 import com.spotify.android.appremote.api.SpotifyAppRemote
 import com.spotify.protocol.error.SpotifyAppRemoteException
+import java.lang.Math.log
+import java.lang.Math.sqrt
 import java.lang.Thread.sleep
 import java.util.*
 import kotlin.concurrent.fixedRateTimer
@@ -47,8 +49,12 @@ const val ACTION_GATT_SERVICES_DISCOVERED =
  * Coordinate-based system!
  */
 private val BEACON1_COORD = Pair(1,0) //beacon 1 on right of diagram
-private val BEACON2_COORD = Pair(0,2) // beacon 2 in middle
-private val BEACON3_COORD = Pair(-1,0) // beacon 3 on left
+private val BEACON2_COORD = Pair(0,1) // beacon 2 in middle
+private val BEACON3_COORD = Pair(0,0) // beacon 3 on left
+private val rbeacon = 75 //meters-- range of beacon
+private val width = 10.5
+private val height = 10.5
+
 
 var rssi1:Int = 0
 var rssi2:Int = 0
@@ -90,7 +96,6 @@ class BLEConnect: AppCompatActivity()  {
         }
         initBLERSSI()
     }
-
 
 
     // RSSI Calculated-method
@@ -168,13 +173,9 @@ class BLEConnect: AppCompatActivity()  {
                 gattCallback.onReadRemoteRssi(bluetoothGatt2,rssi2,0)
                 gattCallback.onReadRemoteRssi(bluetoothGatt3,rssi3,0)
                 var isConnected:Boolean? = bluetoothGatt?.readRemoteRssi()
-                Log.d("Time1!"," ")
                 var isConnected2:Boolean? = bluetoothGatt2?.readRemoteRssi()
                 var isConnected3:Boolean? = bluetoothGatt3?.readRemoteRssi()
-                if(isConnected==true && isConnected2==true && isConnected3==true)
-                    connectionState = STATE_CONNECTED
-                else
-                    connectionState = STATE_DISCONNECTED
+
                 Log.d("isConnect","${isConnected}, ${isConnected2}, ${isConnected3}.")
                 //Setting rssi ..... First implementation...
                 if(result?.device?.address == "80:6F:B0:6C:94:2B")
@@ -210,28 +211,132 @@ class BLEConnect: AppCompatActivity()  {
         gattCallback.onReadRemoteRssi(bluetoothGatt2,rssi2,0)
         gattCallback.onReadRemoteRssi(bluetoothGatt3,rssi3,0)
 
-        fixedRateTimer("timer", false, 0L, 10 * 1000) { //EVERY 5 SECONDS!
-            this@BLEConnect.runOnUiThread {
-                val avg1 = time1Lst.average() * SYS_DELAY * SIGNAL_S
-                val avg2 = time2Lst.average() * SYS_DELAY * SIGNAL_S
-                val avg3 = time3Lst.average() * SYS_DELAY * SIGNAL_S
 
+        fixedRateTimer("timer", false, 0L, 10 * 1000) { //EVERY 10 SECONDS!
+            this@BLEConnect.runOnUiThread {
+
+                /*
+                CALCULATING DISTANCE OF EACH BEACON IN VECTOR FORMAT
+                 */
+                var rA = Math.pow(10.0,((rssi1-(-64))/(-10*(2.7))))
+                var rB = Math.pow(10.0,((rssi2-(-64))/(-10*(2.7))))
+                var rC = Math.pow(10.0,((rssi3-(-64))/(-10*(2.7))))
+
+                var ABx = BEACON2_COORD.first - BEACON1_COORD.first
+                var ABy = BEACON2_COORD.second - BEACON1_COORD.second
+
+                var ACx = BEACON3_COORD.first - BEACON1_COORD.first
+                var ACy = BEACON3_COORD.second - BEACON1_COORD.second
+
+                var BCx = BEACON3_COORD.first - BEACON2_COORD.first
+                var BCy = BEACON3_COORD.second - BEACON2_COORD.second
+
+                // VECTOR! square root of sum of squares
+                var AB = sqrt(Math.pow(ABx.toDouble(), 2.0) + Math.pow(ABy.toDouble(), 2.0))
+                var AC = sqrt(Math.pow(ACx.toDouble(), 2.0) + Math.pow(ACy.toDouble(), 2.0))
+                var BC = sqrt(Math.pow(BCx.toDouble(), 2.0) + Math.pow(BCy.toDouble(), 2.0))
+
+                //(radius squared plus ab squared - radius squared) divided by 2AB
+                var ax = (Math.pow(rA.toDouble(), 2.0) + Math.pow(AB, 2.0) - Math.pow(rA.toDouble(),2.0)) / (2 * AB)
+                var ay = Math.pow(rA.toDouble(), 2.0) - Math.pow(ax, 2.0)
+                var bx = (Math.pow(rB.toDouble(),2.0) + Math.pow(BC, 2.0) - Math.pow(rB.toDouble(),2.0)) / (2 * BC)
+                var by = Math.pow(rB.toDouble(),2.0) - Math.pow(bx, 2.0)
+                var cx = (Math.pow(rC.toDouble(),2.0) + Math.pow(AC, 2.0) - Math.pow(rC.toDouble(),2.0)) / (2 * AC)
+                var cy = Math.pow(rC.toDouble(),2.0) - Math.pow(cx, 2.0)
+
+
+                if (ay > 0 || by > 0 || cy > 0) {
+                    ay = sqrt(ay);by = sqrt(by);cy = sqrt(cy)
+                }
+
+
+                //UNIT VECTOR
+                var eax = ABx / AB
+                var ebx = BCx / BC
+                var ecx = ACx / AC
+                var eay = ABy / AB
+                var eby = BCy / BC
+                var ecy = ACy / AC
+
+                var nax = -eay
+                var nbx = -eby
+                var ncx = -ecy
+
+
+                var nay = eax
+                var nby = ebx
+                var ncy = ecx
+
+
+                //polynomial representation of point from beacons....
+                var Q1ax = BEACON1_COORD.first + ax * eax
+                var Q1bx = BEACON2_COORD.first + bx * ebx
+                var Q1cx = BEACON3_COORD.first + cx * ecx
+
+                var Q1ay = BEACON1_COORD.second + ax * eay
+                var Q1by = BEACON2_COORD.second + bx * eby
+                var Q1cy = BEACON2_COORD.second + cx * ecy
+
+                //if multiple intersection
+                //if(ay != 0.0 && by != 0.0 && cy != 0.0) {
+                    var Q2ax = Q1ax - ay * nax
+                    var Q2bx = Q1bx - by * nbx
+                    var Q2cx = Q1cx - cy * ncx
+                    var Q2ay = Q1ay - ay * nay
+                    var Q2by = Q1by - by * nby
+                    var Q2cy = Q1cy - cy * ncy
+                    Q1ax += ay * nax
+                    Q1bx += by * nbx
+                    Q1cx += cy * ncx
+                    Q1ay += ay * nay
+                    Q1by += by * nby
+                    Q1cy += cy * ncy
+                    //Line equations for intersections
+                    var ak = (Q2ay - Q1ay) / (Q2ax - Q1ax)
+                    var ad = Q2ay - (ak * Q2ax)
+                    var aymax = ak * (width) + ad
+                    var aymin = ak * 0 + ad
+                    var bk = (Q2by - Q1by) / (Q2bx - Q1bx)
+                    var bd = Q2by - (bk * Q2bx)
+                    var bymax = bk * (width) + bd
+                    var bymin = bk * 0 + bd
+                    var ck = (Q2cy - Q1cy) / (Q2cx - Q1cx)
+                    var cd = Q2cy - (ck * Q2cx)
+                    var cymax = ck * (width) + cd
+                    var cymin = ck * 0 + cd;
+                //}
+
+
+                // val avg1 = time1Lst.average() * SYS_DELAY * SIGNAL_S
+                // val avg2 = time2Lst.average() * SYS_DELAY * SIGNAL_S
+                // val avg3 = time3Lst.average() * SYS_DELAY * SIGNAL_S
+                /**
+                 * Q1a,Q1b,Q1c,Q2a,Q2b,Q2c are used here to check quadrants!!!
+                 */
                 // THIS IS THE PART WHERE PLAYLIST WILL CHANGGE
-                if(avg1 > avg2 && avg2 > avg3) // 2nd sector
-                    if(SpotifyService.getPlayllist() != "spotify:playlist:71JXQ7EwfZMKmLPrzKZAB4" )
+                if (Q2bx > Q2ax && Q2by > Q2ay && Q2bx > Q2cx && Q2by > Q2cy) // 2nd sector
+                {
+                    if (SpotifyService.getPlayllist() != "spotify:playlist:71JXQ7EwfZMKmLPrzKZAB4")
                         SpotifyService.play("spotify:playlist:71JXQ7EwfZMKmLPrzKZAB4")
-                else if(avg2>avg1 && avg1> avg3)//sector 3
-                    if(SpotifyService.getPlayllist() != "spotify:playlist:37i9dQZF1DX1PfYnYcpw8w" )
+                }
+                else if (Q2bx < Q2ax && Q2by < Q2ay && Q2bx < Q2cx && Q2by < Q2cy)//sector 3
+                {
+                    if (SpotifyService.getPlayllist() != "spotify:playlist:37i9dQZF1DX1PfYnYcpw8w")
                         SpotifyService.play("spotify:playlist:37i9dQZF1DX1PfYnYcpw8w")
-                else if(avg2>avg1 && avg3 > avg1)// sector 4
-                    if(SpotifyService.getPlayllist() != "spotify:playlist:37i9dQZF1DXbYM3nMM0oPk" )
+                }
+                else if(Q2bx < Q2ax && Q2by > Q2ay && Q2bx < Q2cx && Q2by < Q2cy)// sector 4
+                {
+                    if (SpotifyService.getPlayllist() != "spotify:playlist:37i9dQZF1DXbYM3nMM0oPk")
                         SpotifyService.play("spotify:playlist:37i9dQZF1DXbYM3nMM0oPk")
-                else if(avg3>avg2 && avg1 > avg2) //1st sector
-                    if(SpotifyService.getPlayllist() != "spotify:playlist:37i9dQZF1DWTlgzqHpWg4m" )
+                }
+                else if(Q2bx > Q2ax && Q2by < Q2ay && Q2bx < Q2cx && Q2by < Q2cy) //1st sector
+                {
+                    if (SpotifyService.getPlayllist() != "spotify:playlist:37i9dQZF1DWTlgzqHpWg4m")
                         SpotifyService.play("spotify:playlist:37i9dQZF1DWTlgzqHpWg4m")
-                time1Lst = mutableListOf()
-                time2Lst = mutableListOf()
-                time3Lst = mutableListOf()
+                }
+                //time1Lst = mutableListOf()
+                //time2Lst = mutableListOf()
+                //time3Lst = mutableListOf()
             }
         }
     }

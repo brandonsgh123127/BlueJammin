@@ -237,19 +237,15 @@ class BLEConnect: AppCompatActivity()  {
                 var BC = sqrt(Math.pow(BCx.toDouble(), 2.0) + Math.pow(BCy.toDouble(), 2.0))
 
                 //(radius squared plus ab squared - radius squared) divided by 2AB
-                var ax = (Math.pow(rA.toDouble(), 2.0) + Math.pow(AB, 2.0) - Math.pow(rA.toDouble(),2.0)) / (2 * AB)
+                var ax = (Math.pow(rA.toDouble(), 2.0) + Math.pow(AB, 2.0) - Math.pow(rB.toDouble(),2.0)) / (2 * AB)
                 var ay = Math.pow(rA.toDouble(), 2.0) - Math.pow(ax, 2.0)
-                var bx = (Math.pow(rB.toDouble(),2.0) + Math.pow(BC, 2.0) - Math.pow(rB.toDouble(),2.0)) / (2 * BC)
+                var bx = (Math.pow(rB.toDouble(),2.0) + Math.pow(BC, 2.0) - Math.pow(rC.toDouble(),2.0)) / (2 * BC)
                 var by = Math.pow(rB.toDouble(),2.0) - Math.pow(bx, 2.0)
-                var cx = (Math.pow(rC.toDouble(),2.0) + Math.pow(AC, 2.0) - Math.pow(rC.toDouble(),2.0)) / (2 * AC)
+                var cx = (Math.pow(rC.toDouble(),2.0) + Math.pow(AC, 2.0) - Math.pow(rA.toDouble(),2.0)) / (2 * AC)
                 var cy = Math.pow(rC.toDouble(),2.0) - Math.pow(cx, 2.0)
-
-
                 if (ay > 0 || by > 0 || cy > 0) {
                     ay = sqrt(ay);by = sqrt(by);cy = sqrt(cy)
                 }
-
-
                 //UNIT VECTOR
                 var eax = ABx / AB
                 var ebx = BCx / BC
@@ -261,8 +257,6 @@ class BLEConnect: AppCompatActivity()  {
                 var nax = -eay
                 var nbx = -eby
                 var ncx = -ecy
-
-
                 var nay = eax
                 var nby = ebx
                 var ncy = ecx
@@ -272,7 +266,6 @@ class BLEConnect: AppCompatActivity()  {
                 var Q1ax = BEACON1_COORD.first + ax * eax
                 var Q1bx = BEACON2_COORD.first + bx * ebx
                 var Q1cx = BEACON3_COORD.first + cx * ecx
-
                 var Q1ay = BEACON1_COORD.second + ax * eay
                 var Q1by = BEACON2_COORD.second + bx * eby
                 var Q1cy = BEACON2_COORD.second + cx * ecy
@@ -291,20 +284,6 @@ class BLEConnect: AppCompatActivity()  {
                     Q1ay += ay * nay
                     Q1by += by * nby
                     Q1cy += cy * ncy
-                    //Line equations for intersections
-                    var ak = (Q2ay - Q1ay) / (Q2ax - Q1ax)
-                    var ad = Q2ay - (ak * Q2ax)
-                    var aymax = ak * (width) + ad
-                    var aymin = ak * 0 + ad
-                    var bk = (Q2by - Q1by) / (Q2bx - Q1bx)
-                    var bd = Q2by - (bk * Q2bx)
-                    var bymax = bk * (width) + bd
-                    var bymin = bk * 0 + bd
-                    var ck = (Q2cy - Q1cy) / (Q2cx - Q1cx)
-                    var cd = Q2cy - (ck * Q2cx)
-                    var cymax = ck * (width) + cd
-                    var cymin = ck * 0 + cd;
-                //}
 
 
                 // val avg1 = time1Lst.average() * SYS_DELAY * SIGNAL_S
@@ -314,22 +293,22 @@ class BLEConnect: AppCompatActivity()  {
                  * Q1a,Q1b,Q1c,Q2a,Q2b,Q2c are used here to check quadrants!!!
                  */
                 // THIS IS THE PART WHERE PLAYLIST WILL CHANGGE
-                if (Q2bx > Q2ax && Q2by > Q2ay && Q2bx > Q2cx && Q2by > Q2cy) // 2nd sector
+                if (rA < rB && rA < rC) // bottom right
                 {
                     if (SpotifyService.getPlayllist() != "spotify:playlist:71JXQ7EwfZMKmLPrzKZAB4")
                         SpotifyService.play("spotify:playlist:71JXQ7EwfZMKmLPrzKZAB4")
                 }
-                else if (Q2bx < Q2ax && Q2by < Q2ay && Q2bx < Q2cx && Q2by < Q2cy)//sector 3
+                else if (rA >= rB && rA < rC)//top right
                 {
                     if (SpotifyService.getPlayllist() != "spotify:playlist:37i9dQZF1DX1PfYnYcpw8w")
                         SpotifyService.play("spotify:playlist:37i9dQZF1DX1PfYnYcpw8w")
                 }
-                else if(Q2bx < Q2ax && Q2by > Q2ay && Q2bx < Q2cx && Q2by < Q2cy)// sector 4
+                else if(rB < rC && rB < rA)// top left
                 {
                     if (SpotifyService.getPlayllist() != "spotify:playlist:37i9dQZF1DXbYM3nMM0oPk")
                         SpotifyService.play("spotify:playlist:37i9dQZF1DXbYM3nMM0oPk")
                 }
-                else if(Q2bx > Q2ax && Q2by < Q2ay && Q2bx < Q2cx && Q2by < Q2cy) //1st sector
+                else if(rC < rB && rC < rA) //Bottom left
                 {
                     if (SpotifyService.getPlayllist() != "spotify:playlist:37i9dQZF1DWTlgzqHpWg4m")
                         SpotifyService.play("spotify:playlist:37i9dQZF1DWTlgzqHpWg4m")

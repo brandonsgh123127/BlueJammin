@@ -63,9 +63,9 @@ var rssi3:Int = 0
 private const val SYS_DELAY = 0.11111 // Reading each Device's rssi creates lag...  about 8 ns lag
 private const val SIGNAL_S = .299792    //Speed(m) of signal per ns....
 
-var time1Lst:MutableList<Long> = mutableListOf()
-var time2Lst:MutableList<Long> = mutableListOf()
-var time3Lst:MutableList<Long> = mutableListOf()
+var time1Lst:MutableList<Int> = mutableListOf()
+var time2Lst:MutableList<Int> = mutableListOf()
+var time3Lst:MutableList<Int> = mutableListOf()
 
 var curPlaylist = ""
 
@@ -179,17 +179,20 @@ class BLEConnect: AppCompatActivity()  {
                 Log.d("isConnect","${isConnected}, ${isConnected2}, ${isConnected3}.")
                 //Setting rssi ..... First implementation...
                 if(result?.device?.address == "80:6F:B0:6C:94:2B")
-                    time1Lst.add(measureNanoTime{rssi1 = result.getRssi()})
+                    rssi1 = result.getRssi()
                     //Log.d("time1!!!","${measureNanoTime {rssi1 = result.getRssi()}}")
                 else if(result?.device?.address == "E0:7D:EA:2D:29:AB")
-                    time2Lst.add(measureNanoTime{rssi2 = result.getRssi()})
+                    rssi2 = result.getRssi()
                     //Log.d("time2!!!","${measureNanoTime {rssi2 = result.getRssi()}}")
                 else if(result?.device?.address == "80:6F:B0:6C:8F:B6")
-                    time3Lst.add(measureNanoTime{rssi3 = result.getRssi()})
+                    rssi3 = result.getRssi()
                     //Log.d("time3!!!","${measureNanoTime {rssi3 = result.getRssi()}}")
                 Beacon1RSSI.text=Integer.toString(rssi1) + " dBm"
                 Beacon2RSSI.text=Integer.toString(rssi2) + " dBm"
                 Beacon3RSSI.text=Integer.toString(rssi3) + " dBm"
+                time1Lst.add(rssi1)
+                time2Lst.add(rssi2)
+                time3Lst.add(rssi3)
                 angleCalc(bluetoothGatt)
             }
         }
@@ -212,15 +215,18 @@ class BLEConnect: AppCompatActivity()  {
         gattCallback.onReadRemoteRssi(bluetoothGatt3,rssi3,0)
 
 
-        fixedRateTimer("timer", false, 0L, 10 * 1000) { //EVERY 10 SECONDS!
+        fixedRateTimer("timer", false, 0L, 5 * 1000) { //EVERY 10 SECONDS!
             this@BLEConnect.runOnUiThread {
 
                 /*
                 CALCULATING DISTANCE OF EACH BEACON IN VECTOR FORMAT
                  */
-                var rA = Math.pow(10.0,((rssi1-(-64))/(-10*(2.7))))
-                var rB = Math.pow(10.0,((rssi2-(-64))/(-10*(2.7))))
-                var rC = Math.pow(10.0,((rssi3-(-64))/(-10*(2.7))))
+                //var rA = Math.pow(10.0,((rssi1-(-64))/(-10*(2.7))))
+                var rA = calculateBeaconDistance(time1Lst.average().toInt())
+                //var rB = Math.pow(10.0,((rssi2-(-64))/(-10*(2.7))))
+                var rB = calculateBeaconDistance(time2Lst.average().toInt())
+                //var rC = Math.pow(10.0,((rssi3-(-64))/(-10*(2.7))))
+                var rC = calculateBeaconDistance(time3Lst.average().toInt())
 
                 var ABx = BEACON2_COORD.first - BEACON1_COORD.first
                 var ABy = BEACON2_COORD.second - BEACON1_COORD.second
@@ -285,7 +291,6 @@ class BLEConnect: AppCompatActivity()  {
                     Q1by += by * nby
                     Q1cy += cy * ncy
 
-
                 // val avg1 = time1Lst.average() * SYS_DELAY * SIGNAL_S
                 // val avg2 = time2Lst.average() * SYS_DELAY * SIGNAL_S
                 // val avg3 = time3Lst.average() * SYS_DELAY * SIGNAL_S
@@ -293,25 +298,27 @@ class BLEConnect: AppCompatActivity()  {
                  * Q1a,Q1b,Q1c,Q2a,Q2b,Q2c are used here to check quadrants!!!
                  */
                 // THIS IS THE PART WHERE PLAYLIST WILL CHANGGE
-                if (rA < rB && rA < rC) // bottom right
+                if (rA < rB && rA < rC) // bottom right !
                 {
                     if (SpotifyService.getPlayllist() != "spotify:playlist:71JXQ7EwfZMKmLPrzKZAB4")
                         SpotifyService.play("spotify:playlist:71JXQ7EwfZMKmLPrzKZAB4")
                 }
-                else if (rA >= rB && rA < rC)//top right
-                {
-                    if (SpotifyService.getPlayllist() != "spotify:playlist:37i9dQZF1DX1PfYnYcpw8w")
-                        SpotifyService.play("spotify:playlist:37i9dQZF1DX1PfYnYcpw8w")
-                }
-                else if(rB < rC && rB < rA)// top left
+                else if(rB < rA && rC < rA)// top left!
                 {
                     if (SpotifyService.getPlayllist() != "spotify:playlist:37i9dQZF1DXbYM3nMM0oPk")
                         SpotifyService.play("spotify:playlist:37i9dQZF1DXbYM3nMM0oPk")
                 }
-                else if(rC < rB && rC < rA) //Bottom left
+                else if(rC < rB && rC < rA) //Bottom left!
                 {
                     if (SpotifyService.getPlayllist() != "spotify:playlist:37i9dQZF1DWTlgzqHpWg4m")
                         SpotifyService.play("spotify:playlist:37i9dQZF1DWTlgzqHpWg4m")
+                }
+                else//top right
+                {
+                    if ((rA + rB <= 4 && rA + rB >= -4) && (rB+ rC <= 4&& rB + rC >= -4) && (rB + rC <= 4&& rB + rC >= -4)) {
+                        if (SpotifyService.getPlayllist() != "spotify:playlist:37i9dQZF1DX1PfYnYcpw8w")
+                            SpotifyService.play("spotify:playlist:37i9dQZF1DX1PfYnYcpw8w")
+                    }
                 }
                 //time1Lst = mutableListOf()
                 //time2Lst = mutableListOf()
@@ -338,6 +345,36 @@ class BLEConnect: AppCompatActivity()  {
 
 
 }
+
+
+fun calculateBeaconDistance(rssi: Int): Double {
+    var ratio : Double
+    var accuracy : Double
+    // Manufacture set this power in the device
+    var A = -64.0
+    val signalPropagationConstant: Double = -3.2;
+
+
+    if (rssi == 0){
+
+        return  -1.0; // if we cannot determine accuracy, return -1.
+
+    }
+
+    return Math.pow(10.0, (rssi-A) / (-10.0 * signalPropagationConstant))
+}
+
+/**
+ * It needs distanceA is distance from beacon 1, distanceB is distance from beacon 2, distanceC is distance from beacon 3
+ * , pointA1, pointA2 (location of beacon 1) (1.0,0.0)
+ * , pointB1, pointB2  (location of beacon 2) (0.0,2.0)
+ * , pointC1, pointC2 (location of beacon 3)  (-1.0,0.0)
+ * x, y are the location of the device
+ */
+
+
+
+
 class TDOAConnect:AppCompatActivity(){
 
     override fun onCreate(savedInstanceState: Bundle?) {

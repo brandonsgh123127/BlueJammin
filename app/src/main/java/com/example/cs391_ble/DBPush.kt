@@ -4,5 +4,7 @@ import androidx.appcompat.app.AppCompatActivity
 
 class DBPush:AppCompatActivity()
 {
-    override fun onCreate()
+     fun onCreate() {
+
+    }
 }

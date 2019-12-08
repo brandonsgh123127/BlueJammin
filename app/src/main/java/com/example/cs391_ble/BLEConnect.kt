@@ -92,7 +92,7 @@ class BLEConnect: AppCompatActivity()  {
             else if(isChecked==true)
             {
                 on_Switch.text= getResources().getString(R.string.Beacon_TDOA)
-                val intent = Intent(this, TDOAConnect::class.java)
+                val intent = Intent(this, PACKETConnect::class.java)
                 startActivity(intent)
             }
         }

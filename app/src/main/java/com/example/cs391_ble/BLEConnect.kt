@@ -48,8 +48,8 @@ const val ACTION_GATT_SERVICES_DISCOVERED =
 /**
  * Coordinate-based system!
  */
-private val BEACON1_COORD = Pair(1,0) //beacon 1 on right of diagram
-private val BEACON2_COORD = Pair(0,1) // beacon 2 in middle
+private val BEACON1_COORD = Pair(2,0) //beacon 1 on right of diagram
+private val BEACON2_COORD = Pair(0,2) // beacon 2 in middle
 private val BEACON3_COORD = Pair(0,0) // beacon 3 on left
 private val rbeacon = 75 //meters-- range of beacon
 private val width = 10.5
@@ -74,6 +74,8 @@ var curPlaylist = ""
  * not enough time to fully implement everything with ease.
  */
 class BLEConnect: AppCompatActivity()  {
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         //finish()
         super.onCreate(savedInstanceState)
@@ -102,11 +104,17 @@ class BLEConnect: AppCompatActivity()  {
     private fun initBLERSSI(){
         isConnectedText.setText("Connected!")
         Toast.makeText(this, "Done", Toast.LENGTH_LONG).show()
-        // Represents bluetooth device on phone.
+    // Represents bluetooth device on phone.
         val bluetoothAdapter: BluetoothAdapter? by lazy(LazyThreadSafetyMode.NONE) {
             val bluetoothManager = getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
             bluetoothManager.adapter
         }
+        // FIRST BLE DEVICES..........
+        var bluetoothLEScanner = bluetoothAdapter?.getBluetoothLeScanner()
+        var device: BluetoothDevice? = bluetoothAdapter?.getRemoteDevice("80:6F:B0:6C:94:2B")
+        var device2: BluetoothDevice? = bluetoothAdapter?.getRemoteDevice("E0:7D:EA:2D:29:AB")
+        var device3: BluetoothDevice? = bluetoothAdapter?.getRemoteDevice("80:6F:B0:6C:8F:B6")
+        var connectionState = STATE_DISCONNECTED
         //Now, Initialize a BL Adapter for usage later on...
         // With bluetoothAdapter, one is able to interact with bluetooth devices
         bluetoothAdapter?.takeIf { !it.isEnabled }?.apply {
@@ -117,12 +125,6 @@ class BLEConnect: AppCompatActivity()  {
          * Now, Let's connect to a GATT server, aka the BLE devices...
          * Here is where the fun begins...
          */
-        // FIRST BLE DEVICES..........
-        var bluetoothLEScanner = bluetoothAdapter?.getBluetoothLeScanner()
-        var device: BluetoothDevice? = bluetoothAdapter?.getRemoteDevice("80:6F:B0:6C:94:2B")
-        var device2: BluetoothDevice? = bluetoothAdapter?.getRemoteDevice("E0:7D:EA:2D:29:AB")
-        var device3: BluetoothDevice? = bluetoothAdapter?.getRemoteDevice("80:6F:B0:6C:8F:B6")
-        var connectionState = STATE_DISCONNECTED
         /**
          * value of rssi resorts here to the callback!!
          */
@@ -180,13 +182,13 @@ class BLEConnect: AppCompatActivity()  {
                 //Setting rssi ..... First implementation...
                 if(result?.device?.address == "80:6F:B0:6C:94:2B")
                     time1Lst.add(measureNanoTime{rssi1 = result.getRssi()})
-                    //Log.d("time1!!!","${measureNanoTime {rssi1 = result.getRssi()}}")
+                //Log.d("time1!!!","${measureNanoTime {rssi1 = result.getRssi()}}")
                 else if(result?.device?.address == "E0:7D:EA:2D:29:AB")
                     time2Lst.add(measureNanoTime{rssi2 = result.getRssi()})
-                    //Log.d("time2!!!","${measureNanoTime {rssi2 = result.getRssi()}}")
+                //Log.d("time2!!!","${measureNanoTime {rssi2 = result.getRssi()}}")
                 else if(result?.device?.address == "80:6F:B0:6C:8F:B6")
                     time3Lst.add(measureNanoTime{rssi3 = result.getRssi()})
-                    //Log.d("time3!!!","${measureNanoTime {rssi3 = result.getRssi()}}")
+                //Log.d("time3!!!","${measureNanoTime {rssi3 = result.getRssi()}}")
                 Beacon1RSSI.text=Integer.toString(rssi1) + " dBm"
                 Beacon2RSSI.text=Integer.toString(rssi2) + " dBm"
                 Beacon3RSSI.text=Integer.toString(rssi3) + " dBm"
@@ -218,9 +220,9 @@ class BLEConnect: AppCompatActivity()  {
                 /*
                 CALCULATING DISTANCE OF EACH BEACON IN VECTOR FORMAT
                  */
-                var rA = Math.pow(10.0,((rssi1-(-64))/(-10*(2.7))))
-                var rB = Math.pow(10.0,((rssi2-(-64))/(-10*(2.7))))
-                var rC = Math.pow(10.0,((rssi3-(-64))/(-10*(2.7))))
+                var rA = Math.pow(10.0,((rssi1-(-70))/(-10*(4.0))))
+                var rB = Math.pow(10.0,((rssi2-(-70))/(-10*(4.0))))
+                var rC = Math.pow(10.0,((rssi3-(-70))/(-10*(4.0))))
 
                 var ABx = BEACON2_COORD.first - BEACON1_COORD.first
                 var ABy = BEACON2_COORD.second - BEACON1_COORD.second
@@ -272,18 +274,18 @@ class BLEConnect: AppCompatActivity()  {
 
                 //if multiple intersection
                 //if(ay != 0.0 && by != 0.0 && cy != 0.0) {
-                    var Q2ax = Q1ax - ay * nax
-                    var Q2bx = Q1bx - by * nbx
-                    var Q2cx = Q1cx - cy * ncx
-                    var Q2ay = Q1ay - ay * nay
-                    var Q2by = Q1by - by * nby
-                    var Q2cy = Q1cy - cy * ncy
-                    Q1ax += ay * nax
-                    Q1bx += by * nbx
-                    Q1cx += cy * ncx
-                    Q1ay += ay * nay
-                    Q1by += by * nby
-                    Q1cy += cy * ncy
+                var Q2ax = Q1ax - ay * nax
+                var Q2bx = Q1bx - by * nbx
+                var Q2cx = Q1cx - cy * ncx
+                var Q2ay = Q1ay - ay * nay
+                var Q2by = Q1by - by * nby
+                var Q2cy = Q1cy - cy * ncy
+                Q1ax += ay * nax
+                Q1bx += by * nbx
+                Q1cx += cy * ncx
+                Q1ay += ay * nay
+                Q1by += by * nby
+                Q1cy += cy * ncy
 
 
                 // val avg1 = time1Lst.average() * SYS_DELAY * SIGNAL_S
@@ -291,31 +293,36 @@ class BLEConnect: AppCompatActivity()  {
                 // val avg3 = time3Lst.average() * SYS_DELAY * SIGNAL_S
                 /**
                  * Q1a,Q1b,Q1c,Q2a,Q2b,Q2c are used here to check quadrants!!!
+                 *         |            B          | Trilateration...
+                 *         |        //  |  \\      |
+                 *         |_____ //____| ___\\____|
+                 *         |    //      |      \\  | Problem:  Facing away beacon in sector...
+                 *         |  //________|_______ \\|
+                 *           C                    A
                  */
                 // THIS IS THE PART WHERE PLAYLIST WILL CHANGGE
-                if (rA < rB && rA < rC) // bottom right
+                if (rA < rB && (rA+ rC)/2 < ((rC + rB)/2))// bottom RIGHT '90s'
                 {
                     if (SpotifyService.getPlayllist() != "spotify:playlist:71JXQ7EwfZMKmLPrzKZAB4")
                         SpotifyService.play("spotify:playlist:71JXQ7EwfZMKmLPrzKZAB4")
                 }
-                else if (rA >= rB && rA < rC)//top right
-                {
-                    if (SpotifyService.getPlayllist() != "spotify:playlist:37i9dQZF1DX1PfYnYcpw8w")
-                        SpotifyService.play("spotify:playlist:37i9dQZF1DX1PfYnYcpw8w")
-                }
-                else if(rB < rC && rB < rA)// top left
-                {
-                    if (SpotifyService.getPlayllist() != "spotify:playlist:37i9dQZF1DXbYM3nMM0oPk")
-                        SpotifyService.play("spotify:playlist:37i9dQZF1DXbYM3nMM0oPk")
-                }
-                else if(rC < rB && rC < rA) //Bottom left
+                else if(rC < rB && (rA + rB)/2 > ((rC + rB)/2)) //Bottom LEFT 'cali' WORKS
                 {
                     if (SpotifyService.getPlayllist() != "spotify:playlist:37i9dQZF1DWTlgzqHpWg4m")
                         SpotifyService.play("spotify:playlist:37i9dQZF1DWTlgzqHpWg4m")
                 }
-                //time1Lst = mutableListOf()
-                //time2Lst = mutableListOf()
-                //time3Lst = mutableListOf()
+                else if (rB < rA && (rA + rB) / 2 < Math.sqrt(Math.pow(rB, 2.0) + Math.pow(rC, 2.0)))//top LEFT 'ari' WORKS
+                {
+                    if (SpotifyService.getPlayllist() != "spotify:playlist:37i9dQZF1DX1PfYnYcpw8w")
+                        SpotifyService.play("spotify:playlist:37i9dQZF1DX1PfYnYcpw8w")
+                } else if (rB <= rC && rB < Math.sqrt(Math.pow(rB, 2.0) + Math.pow(rC, 2.0)))// top RIGHT 'mega'
+                {
+                    if (SpotifyService.getPlayllist() != "spotify:playlist:37i9dQZF1DXbYM3nMM0oPk")
+                            SpotifyService.play("spotify:playlist:37i9dQZF1DXbYM3nMM0oPk")
+                }
+                time1Lst = mutableListOf()
+                time2Lst = mutableListOf()
+                time3Lst = mutableListOf()
             }
         }
     }
@@ -338,11 +345,16 @@ class BLEConnect: AppCompatActivity()  {
 
 
 }
-class TDOAConnect:AppCompatActivity(){
+
+/**
+ * THIS CLASS IS USED FOR WHEN THE SWITCH IS PRESSED TO DO LONG DISTANCE BEACON LOCATION:
+ * THIS CLASS USES 'SUCCESS PACKETS' TO CONFIGURE LOCATIONS...
+ *
+ */
+class PACKETConnect:AppCompatActivity(){
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
     }
 }
 

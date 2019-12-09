@@ -15,4 +15,5 @@
     <string name="off">Off</string>
     <string name="Beacon_RSSI">RSSI</string>
     <string name="Beacon_TDOA">TDOA</string>
+    <string name="Beacon_SUCCESS">Success Packets</string>
 </resources>

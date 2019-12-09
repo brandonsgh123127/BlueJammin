@@ -41,6 +41,7 @@ dependencies {
     implementation project(':spotify-app-remote')
 
     implementation "com.google.code.gson:gson:2.8.5"
+    implementation 'com.google.firebase:firebase-firestore:21.3.0'
 }
 
 apply plugin: 'com.google.gms.google-services'

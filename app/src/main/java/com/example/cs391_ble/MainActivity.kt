@@ -46,13 +46,8 @@ class MainActivity : AppCompatActivity() {
         SpotifyAPIBUTTON.setOnClickListener {
             progressBar.visibility = View.VISIBLE
             SpotifyService.connect(this) {
-                /*
-                Testing purposes...  remove later on...
-                 */
-                //SpotifyService.play("spotify:playlist:71JXQ7EwfZMKmLPrzKZAB4")
                 // Toast message to confirm connection...
                 Toast.makeText(this,"CONNECTED!",Toast.LENGTH_LONG).show()
-
             }
             sleep(1000)
             val intent = Intent(this, BLEConnect::class.java)

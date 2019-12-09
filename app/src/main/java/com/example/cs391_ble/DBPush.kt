@@ -8,11 +8,14 @@ import com.google.firebase.firestore.FirebaseFirestore
 
 class DBPush
 {
-    private var mDocRef:DocumentReference = FirebaseFirestore.getInstance().document("rssi/rssi")
-    fun saveDB(data: HashMap<String, Int>){
-        mDocRef.set(data).addOnSuccessListener() {
-            Log.d("Database","SUCCESS IN UPLOAD")
-        }
+    private var mFirebase = FirebaseFirestore.getInstance()
+    var mRssi = mFirebase.collection("rssi").document("rssi")
+    var mDistance = mFirebase.collection("rssi").document("distance")
+    var mPlot = mFirebase.collection("rssi").document("plotting")
+    fun saveRSSIDB(data: HashMap<String, Int>, data2: HashMap<String,Double>,data3:HashMap<String,Double>){
+        mRssi.set(data).addOnSuccessListener() {Log.d("Database","SUCCESS IN UPLOADING RSSI") }
+        mDistance.set(data2).addOnSuccessListener { Log.d("Database","SUCCESS IN UPLOADING DISTANCE") }
+        mPlot.set(data3).addOnSuccessListener { Log.d("Database","SUCCESS IN UPLOADING DISTANCE") }
     }
 
 }

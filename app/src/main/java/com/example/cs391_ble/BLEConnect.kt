@@ -87,7 +87,18 @@ private var cy =0.0
 private const val RSSIA_KEY="rssiA"
 private const val RSSIB_KEY="rssiB"
 private const val RSSIC_KEY="rssiC"
+private const val DISTA_KEY="distA"
+private const val DISTB_KEY="distB"
+private const val DISTC_KEY="distC"
+private const val PLOTAX_KEY="plotAX"
+private const val PLOTAY_KEY="plotAY"
+private const val PLOTBX_KEY="plotBX"
+private const val PLOTBY_KEY="plotBY"
+private const val PLOTCX_KEY="plotCX"
+private const val PLOTCY_KEY="plotCY"
 var rssiSave:HashMap<String,Int> = HashMap<String,Int>()
+var distSave:HashMap<String,Double> = HashMap<String,Double>()
+var plotSave:HashMap<String,Double> = HashMap<String,Double>()
 
 
 
@@ -245,23 +256,32 @@ class BLEConnect: AppCompatActivity()  {
         * beacon A will be the bottom right corner, beacon B is the top middle, and
         * beacon C is the bottom right corner.
         */
-        fixedRateTimer("timer", false, 0L, 10 * 1000) { //EVERY 10 SECONDS!
+        fixedRateTimer("timer", false, 0L, 5 * 1000) { //EVERY 10 SECONDS!
             this@BLEConnect.runOnUiThread {
                 /*
                 CALCULATING DISTANCE OF EACH BEACON IN VECTOR FORMAT
                  */
-                 rA = Math.pow(10.0,((rssi1-(-70))/(-10*(4.0))))
-                rB = Math.pow(10.0,((rssi2-(-70))/(-10*(4.0))))
-                rC = Math.pow(10.0,((rssi3-(-70))/(-10*(4.0))))
+                rA = Math.pow(10.0, ((rssi1 - (-70)) / (-10 * (4.0))))
+                rB = Math.pow(10.0, ((rssi2 - (-70)) / (-10 * (4.0))))
+                rC = Math.pow(10.0, ((rssi3 - (-70)) / (-10 * (4.0))))
 
 
                 //(radius squared plus ab squared - radius squared) divided by 2AB
-                ax = (Math.pow(rA.toDouble(), 2.0) + Math.pow(AB, 2.0) - Math.pow(rB.toDouble(),2.0)) / (2 * AB)
+                ax = (Math.pow(rA.toDouble(), 2.0) + Math.pow(AB, 2.0) - Math.pow(
+                    rB.toDouble(),
+                    2.0
+                )) / (2 * AB)
                 ay = Math.pow(rA.toDouble(), 2.0) - Math.pow(ax, 2.0)
-                bx = (Math.pow(rB.toDouble(),2.0) + Math.pow(BC, 2.0) - Math.pow(rC.toDouble(),2.0)) / (2 * BC)
-                by = Math.pow(rB.toDouble(),2.0) - Math.pow(bx, 2.0)
-                cx = (Math.pow(rC.toDouble(),2.0) + Math.pow(AC, 2.0) - Math.pow(rA.toDouble(),2.0)) / (2 * AC)
-                cy = Math.pow(rC.toDouble(),2.0) - Math.pow(cx, 2.0)
+                bx = (Math.pow(rB.toDouble(), 2.0) + Math.pow(BC, 2.0) - Math.pow(
+                    rC.toDouble(),
+                    2.0
+                )) / (2 * BC)
+                by = Math.pow(rB.toDouble(), 2.0) - Math.pow(bx, 2.0)
+                cx = (Math.pow(rC.toDouble(), 2.0) + Math.pow(AC, 2.0) - Math.pow(
+                    rA.toDouble(),
+                    2.0
+                )) / (2 * AC)
+                cy = Math.pow(rC.toDouble(), 2.0) - Math.pow(cx, 2.0)
                 if (ay > 0 || by > 0 || cy > 0) {
                     ay = sqrt(ay);by = sqrt(by);cy = sqrt(cy)
                 }
@@ -312,32 +332,51 @@ class BLEConnect: AppCompatActivity()  {
                  *           C                    A
                  */
                 // THIS IS THE PART WHERE PLAYLIST WILL CHANGGE
-                if (rA < rB && (rA+ rC)/2 < ((rC + rB)/2))// bottom RIGHT '90s'
+                if (rA < rB && (rA + rC) / 2 < ((rC + rB) / 2))// bottom RIGHT '90s'
                 {
                     if (SpotifyService.getPlayllist() != "spotify:playlist:71JXQ7EwfZMKmLPrzKZAB4")
                         SpotifyService.play("spotify:playlist:71JXQ7EwfZMKmLPrzKZAB4")
-                }
-                else if(rC < rB && (rA + rB)/2 > ((rC + rB)/2)) //Bottom LEFT 'cali'
+                } else if (rC < rB && (rA + rB) / 2 > ((rC + rB) / 2)) //Bottom LEFT 'cali'
                 {
                     if (SpotifyService.getPlayllist() != "spotify:playlist:37i9dQZF1DWTlgzqHpWg4m")
                         SpotifyService.play("spotify:playlist:37i9dQZF1DWTlgzqHpWg4m")
-                }
-                else if (rB < rA && (rA + rB) / 2 < Math.sqrt(Math.pow(rB, 2.0) + Math.pow(rC, 2.0)) && rC> rA)//top RIGHT 'ari'
+                } else if (rB < rA && (rA + rB) / 2 < Math.sqrt(
+                        Math.pow(rB, 2.0) + Math.pow(
+                            rC,
+                            2.0
+                        )
+                    ) && rC > rA
+                )//top RIGHT 'ari'
                 {
                     if (SpotifyService.getPlayllist() != "spotify:playlist:37i9dQZF1DX1PfYnYcpw8w")
                         SpotifyService.play("spotify:playlist:37i9dQZF1DX1PfYnYcpw8w")
-                } else if (rB <= rC && rB < Math.sqrt(Math.pow(rA, 2.0) + Math.pow(rC, 2.0))&& rC< rA)// top LEFT 'mega'
+                } else if (rB <= rC && rB < Math.sqrt(
+                        Math.pow(rA, 2.0) + Math.pow(
+                            rC,
+                            2.0
+                        )
+                    ) && rC < rA
+                )// top LEFT 'mega'
                 {
                     if (SpotifyService.getPlayllist() != "spotify:playlist:37i9dQZF1DXbYM3nMM0oPk")
-                            SpotifyService.play("spotify:playlist:37i9dQZF1DXbYM3nMM0oPk")
+                        SpotifyService.play("spotify:playlist:37i9dQZF1DXbYM3nMM0oPk")
                 }
-            }
-            // AT THE END OF TIMER TASK, UPDATE TO DB...
-            rssiSave.put(RSSIA_KEY, rssi1)
-            rssiSave.put(RSSIB_KEY, rssi2)
-            rssiSave.put(RSSIC_KEY, rssi3)
-            DBPush().saveDB(rssiSave) //save...
+                plotSave.put(PLOTAX_KEY, Q2ax)
+                plotSave.put(PLOTAY_KEY, Q2ay)
+                plotSave.put(PLOTBX_KEY, Q2bx)
+                plotSave.put(PLOTBY_KEY, Q2by)
+                plotSave.put(PLOTCX_KEY, Q2cx)
+                plotSave.put(PLOTCY_KEY, Q2cy)
 
+                // AT THE END OF TIMER TASK, UPDATE TO DB...
+                rssiSave.put(RSSIA_KEY, rssi1)
+                rssiSave.put(RSSIB_KEY, rssi2)
+                rssiSave.put(RSSIC_KEY, rssi3)
+                distSave.put(DISTA_KEY, rA)
+                distSave.put(DISTB_KEY, rB)
+                distSave.put(DISTC_KEY, rC)
+                DBPush().saveRSSIDB(rssiSave, distSave, plotSave) //save...
+            }
         }
     }
     private fun broadcastUpdate(action: String) {

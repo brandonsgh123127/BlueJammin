@@ -322,11 +322,11 @@ class BLEConnect: AppCompatActivity()  {
                     if (SpotifyService.getPlayllist() != "spotify:playlist:37i9dQZF1DWTlgzqHpWg4m")
                         SpotifyService.play("spotify:playlist:37i9dQZF1DWTlgzqHpWg4m")
                 }
-                else if (rB < rA && (rA + rB) / 2 < Math.sqrt(Math.pow(rB, 2.0) + Math.pow(rC, 2.0)))//top LEFT 'ari'
+                else if (rB < rA && (rA + rB) / 2 < Math.sqrt(Math.pow(rB, 2.0) + Math.pow(rC, 2.0)) && rC> rA)//top RIGHT 'ari'
                 {
                     if (SpotifyService.getPlayllist() != "spotify:playlist:37i9dQZF1DX1PfYnYcpw8w")
                         SpotifyService.play("spotify:playlist:37i9dQZF1DX1PfYnYcpw8w")
-                } else if (rB <= rC && rB < Math.sqrt(Math.pow(rB, 2.0) + Math.pow(rC, 2.0)))// top RIGHT 'mega'
+                } else if (rB <= rC && rB < Math.sqrt(Math.pow(rA, 2.0) + Math.pow(rC, 2.0))&& rC< rA)// top LEFT 'mega'
                 {
                     if (SpotifyService.getPlayllist() != "spotify:playlist:37i9dQZF1DXbYM3nMM0oPk")
                             SpotifyService.play("spotify:playlist:37i9dQZF1DXbYM3nMM0oPk")

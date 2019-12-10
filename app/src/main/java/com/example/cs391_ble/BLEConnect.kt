@@ -25,11 +25,11 @@ import android.icu.text.SimpleDateFormat
 import android.text.format.Time
 import android.view.View
 import androidx.core.content.PermissionChecker
+import com.google.common.graph.Graph
 import com.google.firebase.firestore.DocumentReference
 import com.spotify.android.appremote.api.SpotifyAppRemote
 import com.spotify.protocol.error.SpotifyAppRemoteException
-import java.lang.Math.log
-import java.lang.Math.sqrt
+import java.lang.Math.*
 import java.lang.Thread.sleep
 import java.util.*
 import kotlin.collections.HashMap
@@ -49,7 +49,7 @@ const val ACTION_GATT_DISCONNECTED = "com.example.cs391_ble.ACTION_GATT_DISCONNE
  * Coordinate-based system!
  */
 private val BEACON1_COORD = Pair(2,0) //beacon 1 on right of diagram
-private val BEACON2_COORD = Pair(0,2) // beacon 2 in middle
+private val BEACON2_COORD = Pair(1,2) // beacon 2 in middle
 private val BEACON3_COORD = Pair(0,0) // beacon 3 on left
 private val width = 10.5
 private val height = 10.5
@@ -96,9 +96,12 @@ private const val PLOTBX_KEY="plotBX"
 private const val PLOTBY_KEY="plotBY"
 private const val PLOTCX_KEY="plotCX"
 private const val PLOTCY_KEY="plotCY"
+private const val GRAPHX_KEY="graphX"
+private const val GRAPHY_KEY="graphY"
 var rssiSave:HashMap<String,Int> = HashMap<String,Int>()
 var distSave:HashMap<String,Double> = HashMap<String,Double>()
 var plotSave:HashMap<String,Double> = HashMap<String,Double>()
+var graphSave:HashMap<String,Double> = HashMap<String,Double>()
 
 
 
@@ -282,9 +285,9 @@ class BLEConnect: AppCompatActivity()  {
                     2.0
                 )) / (2 * AC)
                 cy = Math.pow(rC.toDouble(), 2.0) - Math.pow(cx, 2.0)
-                if (ay > 0 || by > 0 || cy > 0) {
-                    ay = sqrt(ay);by = sqrt(by);cy = sqrt(cy)
-                }
+                ay = sqrt(ay)
+                by = sqrt(by)
+                cy = sqrt(cy)
                 //UNIT VECTOR
                 var eax = ABx / AB
                 var ebx = BCx / BC
@@ -321,6 +324,13 @@ class BLEConnect: AppCompatActivity()  {
                 Q1ay += ay * nay
                 Q1by += by * nby
                 Q1cy += cy * ncy
+
+                var Qax = Q2ax-Q1ax
+                var Qay = Q2ay-Q1ay
+                var Qbx = Q2bx-Q1bx
+                var Qby = Q2by-Q1by
+                var Qcx = Q1cx
+                var Qcy = Q1cy
 
                 /**
                  * Q1a,Q1b,Q1c,Q2a,Q2b,Q2c are used here to check quadrants!!!
@@ -361,12 +371,12 @@ class BLEConnect: AppCompatActivity()  {
                     if (SpotifyService.getPlayllist() != "spotify:playlist:37i9dQZF1DXbYM3nMM0oPk")
                         SpotifyService.play("spotify:playlist:37i9dQZF1DXbYM3nMM0oPk")
                 }
-                plotSave.put(PLOTAX_KEY, Q2ax)
-                plotSave.put(PLOTAY_KEY, Q2ay)
-                plotSave.put(PLOTBX_KEY, Q2bx)
-                plotSave.put(PLOTBY_KEY, Q2by)
-                plotSave.put(PLOTCX_KEY, Q2cx)
-                plotSave.put(PLOTCY_KEY, Q2cy)
+                plotSave.put(PLOTAX_KEY, Qax)
+                plotSave.put(PLOTAY_KEY, Qay)
+                plotSave.put(PLOTBX_KEY, Qbx)
+                plotSave.put(PLOTBY_KEY, Qby)
+                plotSave.put(PLOTCX_KEY, Qcx)
+                plotSave.put(PLOTCY_KEY, Qcy)
 
                 // AT THE END OF TIMER TASK, UPDATE TO DB...
                 rssiSave.put(RSSIA_KEY, rssi1)
@@ -376,6 +386,9 @@ class BLEConnect: AppCompatActivity()  {
                 distSave.put(DISTB_KEY, rB)
                 distSave.put(DISTC_KEY, rC)
                 DBPush().saveRSSIDB(rssiSave, distSave, plotSave) //save...
+                graphSave.put(GRAPHX_KEY,abs(Qax + Qbx + Qcx))
+                graphSave.put(GRAPHY_KEY, abs(Qby -Qay- Qcy))
+                DBPush().saveGraphDB(graphSave)
             }
         }
     }

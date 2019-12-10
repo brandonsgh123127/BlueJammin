@@ -20,6 +20,7 @@ class DBPush
     }
     fun saveGraphDB(data:HashMap<String,Double>){
         mGraphing.set(data).addOnSuccessListener() {Log.d("Database","SUCCESS IN UPLOADING GRAPH DATA") }
+
     }
 
 }
